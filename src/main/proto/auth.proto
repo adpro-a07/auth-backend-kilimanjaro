@@ -1,0 +1,223 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "id.ac.ui.cs.advprog.kilimanjaro.auth.grpc";
+option java_outer_classname = "KilimanjaroAuthProto";
+option objc_class_prefix = "KA";
+
+package id.ac.ui.cs.advprog.kilimanjaro.auth;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Common metadata for all service requests
+message RequestMetadata {
+  string request_id = 1;          // Unique ID for request tracing
+  string client_version = 2;      // Client version for compatibility checks
+  string correlation_id = 3;      // For distributed tracing
+}
+
+// Common response status for all service responses
+message ResponseStatus {
+  int32 code = 1;                 // Status code (0 = success, non-zero = error)
+  string message = 2;             // Human-readable status message
+  string trace_id = 3;            // For debugging and tracing
+}
+
+// Common error details
+message ErrorDetail {
+  string field = 1;               // Field that caused the error
+  string description = 2;         // Error description
+  string error_code = 3;          // Machine-readable error code
+}
+
+// Token validation request
+message TokenValidationRequest {
+  RequestMetadata metadata = 1;
+  string token = 2;
+  bool include_user_data = 3;     // Whether to include user data in response
+}
+
+// Token validation response
+message TokenValidationResponse {
+  ResponseStatus status = 1;
+  bool valid = 2;
+  UserData user_data = 3;         // Only populated if include_user_data=true and token is valid
+}
+
+// User roles enum - use proper naming convention
+enum UserRole {
+  UNSPECIFIED = 0;      // Default value for proto3
+  ADMIN = 1;
+  TECHNICIAN = 2;
+  CUSTOMER = 3;
+}
+
+// User identity information
+message UserIdentity {
+  string id = 1;
+  UserRole role = 2;
+  string email = 3;
+  string full_name = 4;
+  string phone_number = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// User profile information
+message UserProfile {
+  string address = 1;
+  string work_experience = 2;
+  uint32 total_jobs_done = 3;
+  uint64 total_income = 4;
+}
+
+// Complete user data
+message UserData {
+  UserIdentity identity = 1;
+  UserProfile profile = 2;
+}
+
+// Result for a single token in batch validation
+message TokenValidationResult {
+  string token = 1;
+  bool valid = 2;
+  UserData user_data = 3;         // Only populated if include_user_data=true and token is valid
+  repeated ErrorDetail errors = 4; // Only populated if token is invalid
+}
+
+// Token refresh request
+message TokenRefreshRequest {
+  RequestMetadata metadata = 1;
+  string refresh_token = 2;
+}
+
+// Token refresh response
+message TokenRefreshResponse {
+  ResponseStatus status = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  uint64 expires_in = 4;          // Token validity in seconds
+}
+
+// User lookup request
+message UserLookupRequest {
+  RequestMetadata metadata = 1;
+  oneof identifier {
+    string user_id = 2;
+    string email = 3;
+  }
+}
+
+// User lookup response
+message UserLookupResponse {
+  ResponseStatus status = 1;
+  UserData user_data = 2;
+}
+
+// Batch user lookup request
+message BatchUserLookupRequest {
+  RequestMetadata metadata = 1;
+  repeated UserIdentifier identifiers = 2;
+  bool include_profile = 3;  // Whether to include complete user profile data
+}
+
+// User identifier for batch lookups
+message UserIdentifier {
+  oneof identifier {
+    string user_id = 1;
+    string email = 2;
+  }
+}
+
+// Result for a single user in batch lookup
+message UserLookupResult {
+  UserIdentifier requested_identifier = 1;
+  bool found = 2;
+  UserData user_data = 3;  // Only populated if user is found
+  ErrorDetail error = 4;   // Only populated if lookup failed
+}
+
+// Batch user lookup response
+message BatchUserLookupResponse {
+  ResponseStatus status = 1;
+  repeated UserLookupResult results = 2;
+  uint32 total_found = 3;
+  uint32 total_not_found = 4;
+}
+
+// Health check response
+message HealthCheckResponse {
+  enum ServingStatus {
+    SERVING_STATUS_UNKNOWN = 0;
+    SERVING_STATUS_SERVING = 1;
+    SERVING_STATUS_NOT_SERVING = 2;
+    SERVING_STATUS_SERVICE_UNKNOWN = 3;
+  }
+  ServingStatus status = 1;
+}
+
+// --- AuthService definition ---
+service AuthService {
+  // Core token operations
+
+  // Validate token and optionally return user data
+  rpc ValidateToken(TokenValidationRequest) returns (TokenValidationResponse) {}
+
+  // Token lifecycle management
+
+  // Refresh an access token using a refresh token
+  rpc RefreshToken(TokenRefreshRequest) returns (TokenRefreshResponse) {}
+
+
+  // User operations
+
+  // Look up user by ID or email
+  rpc LookupUser(UserLookupRequest) returns (UserLookupResponse) {}
+
+  // Look up multiple users in a single request
+  rpc BatchLookupUsers(BatchUserLookupRequest) returns (BatchUserLookupResponse) {}
+
+  // Health checking
+
+  // Check service health
+  rpc CheckHealth(google.protobuf.Empty) returns (HealthCheckResponse) {}
+}
+
+// --- UserService definition ---
+
+// User listing request with pagination and filtering
+message ListUsersRequest {
+  RequestMetadata metadata = 1;
+  UserRole role = 2;
+  uint32 page_size = 3;           // Number of users to return (default determined by server)
+  uint32 page_number = 4;         // Page number (0-indexed)
+}
+
+// User listing response
+message ListUsersResponse {
+  ResponseStatus status = 1;
+  repeated UserData users = 2;    // List of users
+  uint32 total_count = 3;         // Total number of users matching criteria
+  uint32 total_pages = 4;         // Total number of pages
+  uint32 current_page = 5;        // Current page number
+}
+
+// Random technician request
+message GetRandomTechnicianRequest {
+  RequestMetadata metadata = 1;
+}
+
+// Random technician response
+message GetRandomTechnicianResponse {
+  ResponseStatus status = 1;
+  UserData technician = 2;
+}
+
+service UserService {
+  // List users with optional filtering by role
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
+
+  // Get a random technician (for assignment purposes)
+  rpc GetRandomTechnician(GetRandomTechnicianRequest) returns (GetRandomTechnicianResponse) {}
+}

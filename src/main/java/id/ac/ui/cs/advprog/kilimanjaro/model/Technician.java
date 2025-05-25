@@ -1,40 +1,74 @@
 package id.ac.ui.cs.advprog.kilimanjaro.model;
 
+import id.ac.ui.cs.advprog.kilimanjaro.auth.grpc.UserProfile;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Technician is a type of user that performs jobs and earns income.
+ * It extends the BaseUser class with additional fields for address, experience, job tracking and income.
+ */
+@Entity
+@DiscriminatorValue("TECHNICIAN")
 @Getter
 @Setter
 public class Technician extends BaseUser {
+    @Size(max = 200)
+    @Column(length = 200)
     private String address;
+
+    @Size(max = 500)
+    @Column(length = 500)
     private String experience;
-    private int totalJobsDone = 0;
-    private long totalIncome = 0;
+
+    @Column()
+    private Integer totalJobsDone = 0;
+
+    @Column()
+    private Long totalIncome = 0L;
 
     public void addJobDone(int count, long income) {
         if (count <= 0 || income < 0) {
             throw new IllegalArgumentException("Count must be positive and income must be non-negative");
         }
-        this.totalJobsDone += count;
-        this.totalIncome += income;
+        this.totalJobsDone = (this.totalJobsDone == null ? 0 : this.totalJobsDone) + count;
+        this.totalIncome = (this.totalIncome == null ? 0L : this.totalIncome) + income;
     }
 
-    private Technician(Technician.TechnicianBuilder builder) {
+    protected Technician() {
+        super();
+    }
+
+    @Override
+    public UserProfile getProfile() {
+        return UserProfile.newBuilder()
+                .setAddress(this.address)
+                .setWorkExperience(this.experience)
+                .setTotalJobsDone(this.totalJobsDone)
+                .setTotalIncome(this.totalIncome)
+                .build();
+    }
+
+    private Technician(TechnicianBuilder builder) {
         super(builder);
         this.address = builder.address;
         this.experience = builder.experience;
+        this.totalJobsDone = 0;
+        this.totalIncome = 0L;
     }
 
-    public static class TechnicianBuilder extends BaseUser.BaseUserBuilder<Technician.TechnicianBuilder> {
+    public static class TechnicianBuilder extends BaseUserBuilder<TechnicianBuilder> {
         private String address;
         private String experience;
 
-        public Technician.TechnicianBuilder address(String address) {
+        public TechnicianBuilder address(String address) {
             this.address = address;
             return this;
         }
 
-        public Technician.TechnicianBuilder experience(String experience) {
+        public TechnicianBuilder experience(String experience) {
             this.experience = experience;
             return this;
         }
@@ -45,7 +79,7 @@ public class Technician extends BaseUser {
         }
 
         @Override
-        protected Technician.TechnicianBuilder self() {
+        protected TechnicianBuilder self() {
             return this;
         }
     }

@@ -1,8 +1,18 @@
 package id.ac.ui.cs.advprog.kilimanjaro.model;
 
+import id.ac.ui.cs.advprog.kilimanjaro.auth.grpc.UserProfile;
+import id.ac.ui.cs.advprog.kilimanjaro.model.enums.UserRole;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -11,15 +21,51 @@ import java.util.UUID;
  */
 @Getter
 @Setter
+@Entity
+@Table(name = "users")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "role", discriminatorType = DiscriminatorType.STRING)
+@EntityListeners(AuditingEntityListener.class)
 public abstract class BaseUser {
-    protected final UUID id;
-    protected final String fullName;
-    protected final String email;
-    protected String phoneNumber;
-    protected String password;
+    @Id
+    @GeneratedValue
+    @Column(nullable = false, updatable = false, columnDefinition = "UUID")
+    private UUID id;
+
+    @NotBlank
+    @Size(max = 100)
+    @Column(nullable = false)
+    private String fullName;
+
+    @NotBlank
+    @Email
+    @Size(max = 100)
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @NotBlank
+    @Size(max = 15)
+    @Column(nullable = false)
+    private String phoneNumber;
+
+    @NotBlank
+    @Size(min = 8, max = 100)
+    @Column(nullable = false)
+    private String password;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    // Default constructor for JPA
+    protected BaseUser() {}
 
     protected BaseUser(BaseUserBuilder<?> builder) {
-        if (builder.id == null || builder.fullName == null || builder.email == null
+        if (builder.fullName == null || builder.email == null
                 || builder.phoneNumber == null || builder.password == null) {
             throw new IllegalArgumentException("All fields must be non-null");
         }
@@ -29,6 +75,16 @@ public abstract class BaseUser {
         this.phoneNumber = builder.phoneNumber;
         this.password = builder.password;
     }
+
+    @Transient
+    public UserRole getRole() {
+        return UserRole.valueOf(this.getClass()
+                .getAnnotation(DiscriminatorValue.class)
+                .value()
+                .toUpperCase());
+    }
+
+    public abstract UserProfile getProfile();
 
     /**
      * Abstract Builder pattern implementation for BaseUser.
@@ -41,9 +97,7 @@ public abstract class BaseUser {
         private String phoneNumber;
         private String password;
 
-        public BaseUserBuilder() {
-            this.id = UUID.randomUUID(); // Generate a UUID by default
-        }
+        public BaseUserBuilder() {}
 
         public T id(UUID id) {
             this.id = id;

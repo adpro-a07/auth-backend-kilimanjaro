@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.kilimanjaro.model;
 
 
+import id.ac.ui.cs.advprog.kilimanjaro.auth.grpc.UserProfile;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -17,11 +18,12 @@ public class AdminTest {
                 .password("verySecurePassword")
                 .build();
 
-        assertNotNull(admin.getId());
+        assertNull(admin.getId());
         assertEquals("Super Admin", admin.getFullName());
         assertEquals("admin@example.com", admin.getEmail());
         assertEquals("0811223344", admin.getPhoneNumber());
         assertEquals("verySecurePassword", admin.getPassword());
+        assertEquals("ADMIN", admin.getRole().name());
     }
 
     @Test
@@ -84,5 +86,23 @@ public class AdminTest {
                 .build();
 
         assertEquals(customId, admin.getId());
+    }
+
+    @Test
+    void testGetProfileReturnsUserProfileInstance() {
+        Admin admin = new Admin.AdminBuilder()
+                .fullName("Super Admin")
+                .email("admin@example.com")
+                .phoneNumber("0811223344")
+                .password("verySecurePassword")
+                .build();
+
+        UserProfile profile = admin.getProfile();
+
+        assertNotNull(profile, "UserProfile should not be null");
+        assertEquals("", profile.getAddress());
+        assertEquals("", profile.getWorkExperience());
+        assertEquals(0, profile.getTotalIncome());
+        assertEquals(0, profile.getTotalJobsDone());
     }
 }
