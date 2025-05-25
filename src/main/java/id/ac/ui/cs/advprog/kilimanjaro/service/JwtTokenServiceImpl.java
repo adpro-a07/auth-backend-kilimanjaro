@@ -9,6 +9,7 @@ import id.ac.ui.cs.advprog.kilimanjaro.model.BaseUser;
 import id.ac.ui.cs.advprog.kilimanjaro.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -99,6 +100,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
+    @Async
     public void invalidateToken(String token) {
         try {
             jwtTokenValidator.invalidateToken(token);

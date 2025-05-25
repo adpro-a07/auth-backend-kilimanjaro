@@ -17,10 +17,16 @@ spring:
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.xml
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
 jwt:
   secret: ${JWT_SECRET}
-  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}       # 1h default
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}    # 1d default
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000} # 1h default
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000} # 1d default
 
 server:
   port: ${APP_PORT:8090}

@@ -47,6 +47,7 @@ dependencies {
     // Springboot Starters
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
     // Exclude default hibernate-core and add specific version
     implementation("org.springframework.boot:spring-boot-starter-data-jpa") {
         exclude(group = "org.hibernate.orm", module = "hibernate-core")
