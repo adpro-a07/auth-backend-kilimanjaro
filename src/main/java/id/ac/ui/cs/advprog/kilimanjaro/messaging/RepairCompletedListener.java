@@ -13,7 +13,7 @@ public class RepairCompletedListener {
 
     private final TechnicianService technicianService;
 
-    @RabbitListener(queues = RabbitSubscriberConfig.QUEUE)
+    @RabbitListener(queues = RabbitSubscriberConfig.QUEUE_NAME)
     public void handleRepairCompleted(RepairOrderCompletedEvent event) {
         technicianService.updateStats(
                 event.getTechnicianId(),

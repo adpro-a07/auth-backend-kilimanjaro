@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitSubscriberConfig {
 
     public static final String ORDER_EXCHANGE = "repair.events.exchange";
-    public static final String QUEUE = "technician.repair.completed";
+    public static final String QUEUE_NAME = "technician.repair.completed";
     public static final String ROUTING_KEY = "repair.completed";
 
     @Bean
@@ -25,7 +25,7 @@ public class RabbitSubscriberConfig {
 
     @Bean
     public Queue queue() {
-        return new Queue(QUEUE);
+        return new Queue(QUEUE_NAME);
     }
 
     @Bean
