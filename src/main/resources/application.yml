@@ -23,6 +23,12 @@ spring:
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ["prometheus"]
+
 jwt:
   secret: ${JWT_SECRET}
   access-expiration: ${JWT_ACCESS_EXPIRATION:3600000} # 1h default
