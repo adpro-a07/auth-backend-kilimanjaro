@@ -80,6 +80,10 @@ dependencies {
     // dotenv-java
     implementation("io.github.cdimascio:dotenv-java:3.2.0")
 
+    // Monitoring and Metrics
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
     // Test Dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
