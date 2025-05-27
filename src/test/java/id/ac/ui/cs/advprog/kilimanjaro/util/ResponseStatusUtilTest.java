@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ResponseStatusUtilTest {
+class ResponseStatusUtilTest {
 
     @Test
-    public void testCreateSuccessStatus() {
+    void testCreateSuccessStatus() {
         ResponseStatus status = ResponseStatusUtil.createSuccessStatus();
 
         assertThat(status.getCode()).isZero();
@@ -18,7 +18,7 @@ public class ResponseStatusUtilTest {
     }
 
     @Test
-    public void testCreateErrorStatusWithMessage() {
+    void testCreateErrorStatusWithMessage() {
         String errorMessage = "An error occurred";
         ResponseStatus status = ResponseStatusUtil.createErrorStatus(errorMessage);
 
@@ -28,7 +28,7 @@ public class ResponseStatusUtilTest {
     }
 
     @Test
-    public void testCreateErrorStatusWithException() {
+    void testCreateErrorStatusWithException() {
         Exception ex = new RuntimeException("Something went wrong");
         ResponseStatus status = ResponseStatusUtil.createErrorStatus(ex);
 
@@ -38,7 +38,7 @@ public class ResponseStatusUtilTest {
     }
 
     @Test
-    public void testCreateErrorStatusWithCustomCode() {
+    void testCreateErrorStatusWithCustomCode() {
         int errorCode = 500;
         String errorMessage = "Internal Server Error";
         ResponseStatus status = ResponseStatusUtil.createErrorStatus(errorCode, errorMessage);

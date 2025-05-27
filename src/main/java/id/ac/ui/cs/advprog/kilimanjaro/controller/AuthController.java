@@ -21,19 +21,19 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerCustomer(@Valid @RequestBody RegisterCustomerRequest registerRequest) {
+    public ResponseEntity<GenericResponse<Void>> registerCustomer(@Valid @RequestBody RegisterCustomerRequest registerRequest) {
         GenericResponse<Void> response = authService.registerCustomer(registerRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<GenericResponse<LoginResponse>> loginUser(@Valid @RequestBody LoginRequest loginRequest) {
         GenericResponse<LoginResponse> response = authService.login(loginRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<Void> logoutUser(@RequestHeader("Authorization") String token) {
         authService.logout(token);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

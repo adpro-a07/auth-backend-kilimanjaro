@@ -36,12 +36,23 @@ repositories {
     mavenCentral()
 }
 
+// Version variables
+val springBootVersion = "3.4.4"
+val dependencyManagementVersion = "1.1.7"
+val sonarqubeVersion = "6.0.1.5171"
+val protobufPluginVersion = "0.9.5"
+val javaVersion = 21
 val seleniumJavaVersion = "4.14.1"
 val seleniumJupiterVersion = "5.0.1"
 val webdrivermanagerVersion = "5.6.3"
 val junitJupiterVersion = "5.9.1"
 val protobufVersion = "4.30.2"
 val grpcVersion = "1.72.0"
+val hibernateVersion = "6.5.2.Final"
+val jjwtVersion = "0.11.5"
+val grpcSpringBootVersion = "3.1.0.RELEASE"
+val javaxAnnotationVersion = "1.3.2"
+val dotenvVersion = "3.2.0"
 
 dependencies {
     // Springboot Starters
@@ -52,18 +63,18 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa") {
         exclude(group = "org.hibernate.orm", module = "hibernate-core")
     }
-    implementation("org.hibernate.orm:hibernate-core:6.5.2.Final")
+    implementation("org.hibernate.orm:hibernate-core:$hibernateVersion")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
     // JWT (jjwt)
-    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
 
     // gRPC
-    implementation("net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE")
+    implementation("net.devh:grpc-server-spring-boot-starter:$grpcSpringBootVersion")
     implementation("com.google.protobuf:protobuf-java:$protobufVersion")
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
+    implementation("javax.annotation:javax.annotation-api:$javaxAnnotationVersion")
     implementation("io.grpc:grpc-netty-shaded:$grpcVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("io.grpc:grpc-stub:$grpcVersion")
@@ -78,7 +89,7 @@ dependencies {
     implementation("org.liquibase:liquibase-core")
 
     // dotenv-java
-    implementation("io.github.cdimascio:dotenv-java:3.2.0")
+    implementation("io.github.cdimascio:dotenv-java:$dotenvVersion")
 
     // Monitoring and Metrics
     implementation("io.micrometer:micrometer-registry-prometheus")

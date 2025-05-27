@@ -5,7 +5,6 @@ import id.ac.ui.cs.advprog.kilimanjaro.auth.grpc.UserIdentity;
 import id.ac.ui.cs.advprog.kilimanjaro.auth.grpc.UserProfile;
 import id.ac.ui.cs.advprog.kilimanjaro.dto.UserResponseDto;
 import id.ac.ui.cs.advprog.kilimanjaro.model.BaseUser;
-import id.ac.ui.cs.advprog.kilimanjaro.model.enums.UserRole;
 import id.ac.ui.cs.advprog.kilimanjaro.util.UserMapperUtil;
 
 public abstract class AbstractUserDataMapper<T extends BaseUser> implements UserDataMapper<T> {
@@ -43,9 +42,6 @@ public abstract class AbstractUserDataMapper<T extends BaseUser> implements User
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
-
-    @Override
-    public abstract UserRole supportsRole();
 
     protected abstract UserProfile buildProfile(T user);
 }

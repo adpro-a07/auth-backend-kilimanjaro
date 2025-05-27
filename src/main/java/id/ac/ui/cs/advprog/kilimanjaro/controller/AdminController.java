@@ -22,7 +22,7 @@ public class AdminController {
     }
 
     @PostMapping("/technicians")
-    public ResponseEntity<?> registerTechnician(@Valid @RequestBody RegisterTechnicianRequest registerRequest) {
+    public ResponseEntity<GenericResponse<Void>> registerTechnician(@Valid @RequestBody RegisterTechnicianRequest registerRequest) {
         GenericResponse<Void> response = authService.registerTechnician(registerRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }}

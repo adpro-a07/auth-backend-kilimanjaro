@@ -22,12 +22,12 @@ public abstract class BaseRegisterRequest {
 
     @NotBlank(message = "Phone number is required")
     @Size(min = 8, max = 15, message = "Phone number must be between 8 and 15 characters")
-    @Pattern(regexp = "^[+]?[0-9]{8,15}$", message = "Phone number must contain only numbers with optional + prefix and be between 8-15 digits")
+    @Pattern(regexp = "^[+]?\\d{8,15}$", message = "Phone number must contain only numbers with optional + prefix and be between 8-15 digits")
     private String phoneNumber;
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$",
+    @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$",
             message = "Password must contain at least one digit, one lowercase letter, one uppercase letter, and one special character")
     private String password1;
 
