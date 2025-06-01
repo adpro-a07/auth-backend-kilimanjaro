@@ -30,9 +30,10 @@ management:
         include: ["prometheus"]
 
 jwt:
-  secret: ${JWT_SECRET}
-  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000} # 1h default
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000} # 1d default
+  private-key: ${JWT_PRIVATE_KEY}
+  public-key: ${JWT_PUBLIC_KEY}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}
 
 server:
   port: ${APP_PORT:8090}
