@@ -71,14 +71,13 @@ public class JwtTokenProviderImpl implements JwtTokenGenerator, JwtTokenParser, 
     private String createToken(String subject, Map<String, Object> claims, long expiration) {
         Instant now = clock.instant();
         Instant expiry = now.plusMillis(expiration);
-
         try {
             return Jwts.builder()
                     .setSubject(subject)
                     .setIssuedAt(Date.from(now))
                     .setExpiration(Date.from(expiry))
                     .addClaims(claims)
-                    .signWith(keyProvider.getKey(), SignatureAlgorithm.HS256)
+                    .signWith(keyProvider.getPrivateKey(), SignatureAlgorithm.RS256)  // Changed from HS256 to RS256
                     .compact();
         } catch (JwtException e) {
             logger.error("Error creating JWT token", e);
@@ -128,7 +127,7 @@ public class JwtTokenProviderImpl implements JwtTokenGenerator, JwtTokenParser, 
 
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(keyProvider.getKey())
+                    .setSigningKey(keyProvider.getPrivateKey())
                     .setClock(() -> Date.from(clock.instant()))
                     .build()
                     .parseClaimsJws(token)

@@ -27,40 +27,6 @@ public class GrpcAuthServiceImpl extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
     @Override
-    public void validateToken(TokenValidationRequest request,
-                              StreamObserver<TokenValidationResponse> responseObserver) {
-        logger.info("Received token validation request: {}", request.getMetadata().getRequestId());
-
-        TokenValidationResponse.Builder responseBuilder = TokenValidationResponse.newBuilder();
-        String token = request.getToken();
-        boolean includeUserData = request.getIncludeUserData();
-
-        try {
-            // Just validate access tokens for now (security reasons)
-            boolean isValid = jwtTokenService.validateToken(token, "access");
-            responseBuilder.setValid(isValid);
-
-            if (isValid && includeUserData) {
-                UserData userData = userMapperService.getUserDataFromToken(token);
-                responseBuilder.setUserData(userData);
-            }
-
-            if (isValid) {
-                responseBuilder.setStatus(ResponseStatusUtil.createSuccessStatus());
-            } else {
-                throw new IllegalArgumentException("Invalid token");
-            }
-        } catch (Exception e) {
-            logger.error("Error validating token", e);
-            responseBuilder.setValid(false);
-            responseBuilder.setStatus(ResponseStatusUtil.createErrorStatus(e));
-        }
-
-        responseObserver.onNext(responseBuilder.build());
-        responseObserver.onCompleted();
-    }
-
-    @Override
     public void refreshToken(TokenRefreshRequest request, StreamObserver<TokenRefreshResponse> responseObserver) {
         logger.info("Received token refresh request: {}", request.getMetadata().getRequestId());
 

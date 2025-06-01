@@ -1,5 +1,4 @@
 package id.ac.ui.cs.advprog.kilimanjaro.authentication;
-
 import id.ac.ui.cs.advprog.kilimanjaro.authentication.exceptions.AuthenticationException;
 import id.ac.ui.cs.advprog.kilimanjaro.model.BaseUser;
 import id.ac.ui.cs.advprog.kilimanjaro.repository.UserRepository;
@@ -7,7 +6,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,14 +15,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
-import javax.crypto.SecretKey;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -32,25 +31,21 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class JwtTokenProviderImplTest {
-
     @Mock
     private SigningKeyProvider keyProvider;
-
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private JwtProperties jwtProperties;
-
     @Mock
     private TokenBlacklist tokenBlacklist;
-
     @Mock
     private BaseUser mockUser;
 
     private Clock fixedClock;
     private JwtTokenProviderImpl jwtTokenProvider;
-    private final SecretKey testKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private PrivateKey testPrivateKey;
+    private PublicKey testPublicKey;
     private final String testUsername = "test@example.com";
     private final UUID testUserId = UUID.randomUUID();
     private final Instant fixedInstant = Instant.parse("2023-01-01T12:00:00Z");
@@ -58,12 +53,18 @@ class JwtTokenProviderImplTest {
     private final long REFRESH_TOKEN_EXPIRATION = 86400000; // 24 hours
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
+        // Generate RSA key pair for testing
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        testPrivateKey = keyPair.getPrivate();
+        testPublicKey = keyPair.getPublic();
+
         fixedClock = Clock.fixed(fixedInstant, ZoneId.systemDefault());
-        when(keyProvider.getKey()).thenReturn(testKey);
+        when(keyProvider.getPrivateKey()).thenReturn(testPrivateKey);
         when(jwtProperties.getAccessExpiration()).thenReturn(ACCESS_TOKEN_EXPIRATION);
         when(jwtProperties.getRefreshExpiration()).thenReturn(REFRESH_TOKEN_EXPIRATION);
-
         jwtTokenProvider = new JwtTokenProviderImpl(
                 keyProvider,
                 userRepository,
@@ -76,7 +77,6 @@ class JwtTokenProviderImplTest {
     @Nested
     @DisplayName("Constructor Tests")
     class ConstructorTests {
-
         @Test
         @DisplayName("Should throw NullPointerException when keyProvider is null")
         void shouldThrowExceptionWhenKeyProviderIsNull() {
@@ -121,7 +121,6 @@ class JwtTokenProviderImplTest {
     @Nested
     @DisplayName("Token Generation Tests")
     class TokenGenerationTests {
-
         private Map<String, Object> claims;
 
         @BeforeEach
@@ -134,12 +133,11 @@ class JwtTokenProviderImplTest {
         @DisplayName("Should generate access token with correct claims")
         void shouldGenerateAccessToken() {
             String token = jwtTokenProvider.generateAccessToken(testUsername, claims);
-
             assertNotNull(token);
 
             Claims extractedClaims = Jwts.parserBuilder()
                     .setClock(() -> Date.from(fixedInstant))
-                    .setSigningKey(testKey)
+                    .setSigningKey(testPublicKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -147,7 +145,6 @@ class JwtTokenProviderImplTest {
             assertEquals(testUsername, extractedClaims.getSubject());
             assertEquals(testUserId.toString(), extractedClaims.get("userId"));
             assertEquals("access", extractedClaims.get("type"));
-
             Date expectedExpiration = Date.from(fixedInstant.plusMillis(ACCESS_TOKEN_EXPIRATION));
             assertEquals(expectedExpiration, extractedClaims.getExpiration());
         }
@@ -156,12 +153,11 @@ class JwtTokenProviderImplTest {
         @DisplayName("Should generate refresh token with correct claims")
         void shouldGenerateRefreshToken() {
             String token = jwtTokenProvider.generateRefreshToken(testUsername, claims);
-
             assertNotNull(token);
 
             Claims extractedClaims = Jwts.parserBuilder()
                     .setClock(() -> Date.from(fixedInstant))
-                    .setSigningKey(testKey)
+                    .setSigningKey(testPublicKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -169,7 +165,6 @@ class JwtTokenProviderImplTest {
             assertEquals(testUsername, extractedClaims.getSubject());
             assertEquals(testUserId.toString(), extractedClaims.get("userId"));
             assertEquals("refresh", extractedClaims.get("type"));
-
             Date expectedExpiration = Date.from(fixedInstant.plusMillis(REFRESH_TOKEN_EXPIRATION));
             assertEquals(expectedExpiration, extractedClaims.getExpiration());
         }
@@ -179,7 +174,6 @@ class JwtTokenProviderImplTest {
         void shouldThrowExceptionWhenUsernameIsNull() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> jwtTokenProvider.generateAccessToken(null, claims));
-
             assertTrue(exception.getMessage().contains("Username must not be null or empty"));
         }
 
@@ -188,7 +182,6 @@ class JwtTokenProviderImplTest {
         void shouldThrowExceptionWhenUsernameIsEmpty() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> jwtTokenProvider.generateAccessToken("", claims));
-
             assertTrue(exception.getMessage().contains("Username must not be null or empty"));
         }
 
@@ -197,7 +190,6 @@ class JwtTokenProviderImplTest {
         void shouldThrowExceptionWhenClaimsAreNull() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> jwtTokenProvider.generateAccessToken(testUsername, null));
-
             assertTrue(exception.getMessage().contains("Additional claims must not be null"));
         }
     }
@@ -205,7 +197,6 @@ class JwtTokenProviderImplTest {
     @Nested
     @DisplayName("Token Validation Tests")
     class TokenValidationTests {
-
         private String validToken;
         private Map<String, Object> claims;
 
@@ -220,7 +211,7 @@ class JwtTokenProviderImplTest {
                     .setIssuedAt(Date.from(fixedInstant))
                     .setExpiration(Date.from(fixedInstant.plusMillis(ACCESS_TOKEN_EXPIRATION)))
                     .addClaims(claims)
-                    .signWith(testKey, SignatureAlgorithm.HS256)
+                    .signWith(testPrivateKey, SignatureAlgorithm.RS256)
                     .compact();
 
             when(userRepository.findById(testUserId)).thenReturn(Optional.of(mockUser));
@@ -239,7 +230,6 @@ class JwtTokenProviderImplTest {
         @DisplayName("Should not validate token if blacklisted")
         void shouldNotValidateBlacklistedToken() {
             when(tokenBlacklist.isBlacklisted(validToken)).thenReturn(true);
-
             boolean result = jwtTokenProvider.validateToken(validToken);
             assertFalse(result);
         }
@@ -252,7 +242,7 @@ class JwtTokenProviderImplTest {
                     .setIssuedAt(Date.from(fixedInstant.minusSeconds(7200)))
                     .setExpiration(Date.from(fixedInstant.minusSeconds(3600)))
                     .addClaims(claims)
-                    .signWith(testKey, SignatureAlgorithm.HS256)
+                    .signWith(testPrivateKey, SignatureAlgorithm.RS256)
                     .compact();
 
             boolean result = jwtTokenProvider.validateToken(expiredToken);
@@ -263,21 +253,25 @@ class JwtTokenProviderImplTest {
         @DisplayName("Should not validate token if user not found")
         void shouldNotValidateTokenIfUserNotFound() {
             when(userRepository.existsById(testUserId)).thenReturn(false);
-
             boolean result = jwtTokenProvider.validateToken(validToken);
             assertFalse(result);
         }
 
         @Test
         @DisplayName("Should not validate token with invalid signature")
-        void shouldNotValidateTokenWithInvalidSignature() {
-            SecretKey differentKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        void shouldNotValidateTokenWithInvalidSignature() throws Exception {
+            // Generate a different RSA key pair
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048);
+            KeyPair differentKeyPair = keyPairGenerator.generateKeyPair();
+            PrivateKey differentPrivateKey = differentKeyPair.getPrivate();
+
             String invalidToken = Jwts.builder()
                     .setSubject(testUsername)
                     .setIssuedAt(Date.from(fixedInstant))
                     .setExpiration(Date.from(fixedInstant.plusMillis(ACCESS_TOKEN_EXPIRATION)))
                     .addClaims(claims)
-                    .signWith(differentKey, SignatureAlgorithm.HS256)
+                    .signWith(differentPrivateKey, SignatureAlgorithm.RS256)
                     .compact();
 
             boolean result = jwtTokenProvider.validateToken(invalidToken);
@@ -296,7 +290,7 @@ class JwtTokenProviderImplTest {
                     .setIssuedAt(Date.from(fixedInstant))
                     .setExpiration(Date.from(fixedInstant.plusMillis(ACCESS_TOKEN_EXPIRATION)))
                     .addClaims(invalidClaims)
-                    .signWith(testKey, SignatureAlgorithm.HS256)
+                    .signWith(testPrivateKey, SignatureAlgorithm.RS256)
                     .compact();
 
             boolean result = jwtTokenProvider.validateToken(invalidToken);
@@ -308,7 +302,6 @@ class JwtTokenProviderImplTest {
         void shouldThrowExceptionWhenTokenIsNull() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> jwtTokenProvider.validateToken(null));
-
             assertTrue(exception.getMessage().contains("Token must not be null or empty"));
         }
 
@@ -317,7 +310,6 @@ class JwtTokenProviderImplTest {
         void shouldThrowExceptionWhenTokenIsEmpty() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> jwtTokenProvider.validateToken(""));
-
             assertTrue(exception.getMessage().contains("Token must not be null or empty"));
         }
     }
@@ -325,7 +317,6 @@ class JwtTokenProviderImplTest {
     @Nested
     @DisplayName("Token Information Extraction Tests")
     class TokenInformationExtractionTests {
-
         private String validToken;
 
         @BeforeEach
@@ -340,7 +331,7 @@ class JwtTokenProviderImplTest {
                     .setIssuedAt(Date.from(fixedInstant))
                     .setExpiration(Date.from(fixedInstant.plusMillis(ACCESS_TOKEN_EXPIRATION)))
                     .addClaims(claims)
-                    .signWith(testKey, SignatureAlgorithm.HS256)
+                    .signWith(testPrivateKey, SignatureAlgorithm.RS256)
                     .compact();
 
             when(userRepository.findById(testUserId)).thenReturn(Optional.of(mockUser));
@@ -371,7 +362,7 @@ class JwtTokenProviderImplTest {
                     .setIssuedAt(Date.from(fixedInstant))
                     .setExpiration(Date.from(fixedInstant.plusMillis(ACCESS_TOKEN_EXPIRATION)))
                     .addClaims(invalidClaims)
-                    .signWith(testKey, SignatureAlgorithm.HS256)
+                    .signWith(testPrivateKey, SignatureAlgorithm.RS256)
                     .compact();
 
             when(userRepository.findById((UUID) any())).thenReturn(Optional.of(mockUser));
@@ -410,7 +401,6 @@ class JwtTokenProviderImplTest {
     @Nested
     @DisplayName("Token Invalidation Tests")
     class TokenInvalidationTests {
-
         private String validToken;
         private Date expirationDate;
 
@@ -419,7 +409,6 @@ class JwtTokenProviderImplTest {
             Map<String, Object> claims = new HashMap<>();
             claims.put("userId", testUserId.toString());
             claims.put("type", "access");
-
             expirationDate = Date.from(fixedInstant.plusMillis(ACCESS_TOKEN_EXPIRATION));
 
             validToken = Jwts.builder()
@@ -427,7 +416,7 @@ class JwtTokenProviderImplTest {
                     .setIssuedAt(Date.from(fixedInstant))
                     .setExpiration(expirationDate)
                     .addClaims(claims)
-                    .signWith(testKey, SignatureAlgorithm.HS256)
+                    .signWith(testPrivateKey, SignatureAlgorithm.RS256)
                     .compact();
 
             when(userRepository.findById(testUserId)).thenReturn(Optional.of(mockUser));
@@ -438,7 +427,6 @@ class JwtTokenProviderImplTest {
         @DisplayName("Should invalidate token")
         void shouldInvalidateToken() {
             jwtTokenProvider.invalidateToken(validToken);
-
             verify(tokenBlacklist).blacklist(eq(validToken), eq(expirationDate.toInstant().toEpochMilli()));
         }
 
@@ -447,7 +435,6 @@ class JwtTokenProviderImplTest {
         void shouldThrowExceptionWhenTokenIsNull() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> jwtTokenProvider.invalidateToken(null));
-
             assertTrue(exception.getMessage().contains("Token must not be null or empty"));
         }
 
@@ -456,7 +443,6 @@ class JwtTokenProviderImplTest {
         void shouldThrowExceptionWhenTokenIsEmpty() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> jwtTokenProvider.invalidateToken(""));
-
             assertTrue(exception.getMessage().contains("Token must not be null or empty"));
         }
 
@@ -465,7 +451,6 @@ class JwtTokenProviderImplTest {
         void shouldThrowExceptionWhenBlacklistingFails() {
             doThrow(new JwtException("Blacklisting failed")).when(tokenBlacklist)
                     .blacklist(any(), anyLong());
-
             assertThrows(AuthenticationException.class, () -> jwtTokenProvider.invalidateToken(validToken));
         }
     }
@@ -473,12 +458,10 @@ class JwtTokenProviderImplTest {
     @Nested
     @DisplayName("Error Handling Tests")
     class ErrorHandlingTests {
-
         @Test
         @DisplayName("Should handle JwtException in token validation")
         void shouldHandleJwtExceptionInTokenValidation() {
-            when(keyProvider.getKey()).thenThrow(new JwtException("Test exception"));
-
+            when(keyProvider.getPrivateKey()).thenThrow(new JwtException("Test exception"));
             boolean result = jwtTokenProvider.validateToken("invalid-token");
             assertFalse(result);
         }
@@ -486,11 +469,9 @@ class JwtTokenProviderImplTest {
         @Test
         @DisplayName("Should handle JwtException in token creation")
         void shouldHandleJwtExceptionInTokenCreation() {
-            when(keyProvider.getKey()).thenThrow(new JwtException("Test exception"));
-
+            when(keyProvider.getPrivateKey()).thenThrow(new JwtException("Test exception"));
             Map<String, Object> claims = new HashMap<>();
             claims.put("userId", testUserId.toString());
-
             assertThrows(AuthenticationException.class,
                     () -> jwtTokenProvider.generateAccessToken(testUsername, claims));
         }

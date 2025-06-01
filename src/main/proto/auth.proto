@@ -31,20 +31,6 @@ message ErrorDetail {
   string error_code = 3;          // Machine-readable error code
 }
 
-// Token validation request
-message TokenValidationRequest {
-  RequestMetadata metadata = 1;
-  string token = 2;
-  bool include_user_data = 3;     // Whether to include user data in response
-}
-
-// Token validation response
-message TokenValidationResponse {
-  ResponseStatus status = 1;
-  bool valid = 2;
-  UserData user_data = 3;         // Only populated if include_user_data=true and token is valid
-}
-
 // User roles enum - use proper naming convention
 enum UserRole {
   UNSPECIFIED = 0;      // Default value for proto3
@@ -159,11 +145,6 @@ message HealthCheckResponse {
 
 // --- AuthService definition ---
 service AuthService {
-  // Core token operations
-
-  // Validate token and optionally return user data
-  rpc ValidateToken(TokenValidationRequest) returns (TokenValidationResponse) {}
-
   // Token lifecycle management
 
   // Refresh an access token using a refresh token

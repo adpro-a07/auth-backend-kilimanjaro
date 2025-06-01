@@ -13,8 +13,10 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 public class JwtProperties {
-    private String secret;
+    // Add private and public keys for RS256
+    private String privateKey;  // Could be base64 or PEM encoded
+    private String publicKey;   // Could be base64 or PEM encoded
+
     private long accessExpiration;
     private long refreshExpiration;
 }
-

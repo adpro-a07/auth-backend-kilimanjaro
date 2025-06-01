@@ -22,6 +22,12 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Download and extract async-profiler (split from apt install to cache better)
+RUN wget -O /tmp/async-profiler.tar.gz https://github.com/async-profiler/async-profiler/releases/download/v4.0/async-profiler-4.0-linux-x64.tar.gz && \
+    mkdir /async-profiler && \
+    tar -xvzf /tmp/async-profiler.tar.gz -C /async-profiler --strip-components=1 && \
+    rm -rf /tmp/async-profiler.tar.gz
+
 # Set up application
 USER ${USER_NAME}
 WORKDIR /opt/kilimanjaro
