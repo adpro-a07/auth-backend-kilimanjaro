@@ -5,7 +5,9 @@ import org.springframework.util.Assert;
 
 import java.security.Key;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.Objects;
@@ -38,7 +40,7 @@ public class SigningKeyProviderImpl implements SigningKeyProvider {
         }
     }
 
-    private PrivateKey loadPrivateKey(String base64Pem) throws Exception {
+    private PrivateKey loadPrivateKey(String base64Pem) throws InvalidKeySpecException, NoSuchAlgorithmException {
         // Decode full PEM file from base64
         String pem = new String(Base64.getDecoder().decode(base64Pem));
 
